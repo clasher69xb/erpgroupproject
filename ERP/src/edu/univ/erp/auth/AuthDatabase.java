@@ -1,6 +1,3 @@
-
-    
-
 package edu.univ.erp.auth;
 
 import edu.univ.erp.domain.User;
@@ -11,6 +8,29 @@ public class AuthDatabase {
     private static final String URL = "jdbc:mysql://localhost:3306/erp_auth";
     private static final String USER = "root";
     private static final String PASSWORD = "password";
+    
+    /**
+     * Initialize the Auth database and create tables
+     */
+    public static void initialize() throws SQLException {
+        try (Connection conn = getConnection()) {
+            Statement stmt = conn.createStatement();
+            
+            // Create users_auth table
+            stmt.execute(
+                "CREATE TABLE IF NOT EXISTS users_auth (" +
+                "user_id INT PRIMARY KEY AUTO_INCREMENT, " +
+                "username VARCHAR(50) UNIQUE NOT NULL, " +
+                "role VARCHAR(20) NOT NULL, " +
+                "password_hash VARCHAR(255) NOT NULL, " +
+                "status VARCHAR(20) DEFAULT 'active', " +
+                "last_login TIMESTAMP NULL, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+            );
+            
+            System.out.println("Auth Database initialized successfully");
+        }
+    }
     
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);
@@ -134,7 +154,12 @@ public class AuthDatabase {
         user.setRole(rs.getString("role"));
         user.setPasswordHash(rs.getString("password_hash"));
         user.setStatus(rs.getString("status"));
-        user.setLastLogin(rs.getTimestamp("last_login"));
+        
+        Timestamp lastLogin = rs.getTimestamp("last_login");
+        if (lastLogin != null) {
+            user.setLastLogin(lastLogin.toLocalDateTime());
+        }
+        
         return user;
     }
 }
